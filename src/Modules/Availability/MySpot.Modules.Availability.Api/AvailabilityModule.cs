@@ -8,16 +8,24 @@ using MySpot.Shared.Abstractions.Modules;
 
 namespace MySpot.Modules.Availability.Api;
 
-// TODO: Exercise #2 - Implement the IModule interface for the Availability module
-//
-// Requirements:
-// 1. Create a class named AvailabilityModule that implements IModule
-// 2. Set Name property to return "Availability"
-// 3. In Register() method, add Application and Infrastructure services using extension methods
-// 4. Use() and Expose() methods can have empty bodies for now
-//
-// Hint: Look at how other modules implement IModule (e.g., ParkingSpotsModule, UsersModule)
 
+internal sealed class AvailabilityModule : IModule
+{
+    public string Name { get; } = "Availability";
+
+    public void Register(IServiceCollection services, IConfiguration configuration)
+    {
+        services.AddApplication().AddInfrastructure(configuration);
+    }
+
+    public void Use(IApplicationBuilder app)
+    {
+    }
+
+    public void Expose(IEndpointRouteBuilder endpoints)
+    {
+    }
+}
 // TODO: Exercise #4 - Local Contracts - Subscribe to module requests
 //
 // After completing Exercise #2, update the Use() method to:

@@ -2,7 +2,7 @@
   "availability": {
     "module": {
       "name": "Availability",
-      "enabled": false
+      "enabled": true
     }
   }
 }
