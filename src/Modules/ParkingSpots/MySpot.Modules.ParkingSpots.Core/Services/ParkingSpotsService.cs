@@ -1,4 +1,6 @@
 using Microsoft.EntityFrameworkCore;
+using MySpot.Modules.Availability.Shared;
+using MySpot.Modules.Availability.Shared.DTO;
 using MySpot.Modules.ParkingSpots.Core.DAL;
 using MySpot.Modules.ParkingSpots.Core.Entities;
 using MySpot.Modules.ParkingSpots.Core.Exceptions;
@@ -13,12 +15,14 @@ internal sealed class ParkingSpotsService : IParkingSpotsService
     private readonly DbSet<ParkingSpot> _parkingSpots;
     private readonly ParkingSpotsDbContext _context;
     private readonly IMessageBroker _messageBroker;
+    private readonly IAvailabilityModuleApi _availabilityModuleApi;
 
-    public ParkingSpotsService(ParkingSpotsDbContext context, IMessageBroker messageBroker)
+    public ParkingSpotsService(ParkingSpotsDbContext context, IMessageBroker messageBroker, IAvailabilityModuleApi availabilityModuleApi)
     {
         _context = context;
         _parkingSpots = context.ParkingSpots;
         _messageBroker = messageBroker;
+        _availabilityModuleApi = availabilityModuleApi;
     }
 
     public async Task<IEnumerable<ParkingSpot>> GetAllAsync()
@@ -28,17 +32,8 @@ internal sealed class ParkingSpotsService : IParkingSpotsService
     {
         await _parkingSpots.AddAsync(parkingSpot);
         await _context.SaveChangesAsync();
-
-        // TODO: Exercise #3 - Shared Contracts (Synchronous Communication)
-        //
-        // Notify the Availability module about the new parking spot resource.
-        // 1. Inject IAvailabilityModuleApi via constructor
-        // 2. Call AddResourceAsync() with:
-        //    - ResourceId: the parking spot's ID
-        //    - Capacity: use ParkingSpotCapacity constant
-        //    - Tags: array containing "parking_spot"
-        //
-        // Required reference: MySpot.Modules.Availability.Shared project
+        await _availabilityModuleApi.AddResourceAsync(
+            new AddResourceDto(parkingSpot.Id, ParkingSpotCapacity, new[] { "parking_spot" }));
 
         // TODO: Exercise #5 - Asynchronous Communication (Event-Driven)
         //
