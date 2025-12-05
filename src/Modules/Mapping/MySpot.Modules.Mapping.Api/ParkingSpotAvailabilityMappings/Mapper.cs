@@ -5,21 +5,26 @@ using MySpot.Shared.Abstractions.Messaging;
 
 namespace MySpot.Modules.Mapping.Api.ParkingSpotAvailabilityMappings;
 
-// TODO: Exercise #5 - Implement the Mapper class for asynchronous event-driven communication
-//
-// This class acts as a translation layer (Anti-Corruption Layer) between ParkingSpots and Availability modules.
-// Instead of ParkingSpots directly calling Availability (tight coupling), we use events.
-//
-// Flow: ParkingSpots -> publishes event -> Mapper handles it -> publishes command -> Availability
-//
-// Requirements:
-// 1. Create a class that implements IEventHandler<ParkingSpotCreated> and IEventHandler<ParkingSpotDeleted>
-// 2. Inject IMessageBroker via constructor
-// 3. In HandleAsync(ParkingSpotCreated):
-//    - Create and publish an AddResource command for the Availability module
-//    - Check the AddResource record to see what parameters it needs
-// 4. In HandleAsync(ParkingSpotDeleted):
-//    - Create and publish a DeleteResource command for the Availability module
-//
-// Hint: Look at the Commands folder to see what AddResource and DeleteResource require
+internal sealed class Mapper : IEventHandler<ParkingSpotCreated>, IEventHandler<ParkingSpotDeleted>
+{
+    private readonly IMessageBroker _messageBroker;
+    private const int ParkingSpotCapacity = 2;
 
+    public Mapper(IMessageBroker messageBroker)
+        => _messageBroker = messageBroker;
+
+    public async Task HandleAsync(ParkingSpotCreated @event, CancellationToken cancellationToken = default)
+    {
+        var tags = new[] { "parking_spot" };
+        await _messageBroker.PublishAsync(
+            new AddResource(@event.ParkingSpotId, ParkingSpotCapacity, tags),
+            cancellationToken);
+    }
+
+    public async Task HandleAsync(ParkingSpotDeleted @event, CancellationToken cancellationToken = default)
+    {
+        await _messageBroker.PublishAsync(
+            new DeleteResource(@event.ParkingSpotId),
+            cancellationToken);
+    }
+}

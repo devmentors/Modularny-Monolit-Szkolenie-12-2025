@@ -4,6 +4,7 @@ using MySpot.Modules.Availability.Shared.DTO;
 using MySpot.Modules.ParkingSpots.Core.Clients;
 using MySpot.Modules.ParkingSpots.Core.DAL;
 using MySpot.Modules.ParkingSpots.Core.Entities;
+using MySpot.Modules.ParkingSpots.Core.Events;
 using MySpot.Modules.ParkingSpots.Core.Exceptions;
 using MySpot.Shared.Abstractions.Messaging;
 
@@ -35,16 +36,7 @@ internal sealed class ParkingSpotsService : IParkingSpotsService
         await _parkingSpots.AddAsync(parkingSpot);
         await _context.SaveChangesAsync();
             
-        await _availabilityApiClient.AddResourceAsync(parkingSpot.Id, ParkingSpotCapacity, new[] { "parking_spot" });
-        
-        // TODO: Exercise #5 - Asynchronous Communication (Event-Driven)
-        //
-        // Replace synchronous module call with event publishing.
-        // 1. Remove IModuleClient usage
-        // 2. Use IMessageBroker.PublishAsync() to publish a ParkingSpotCreated event
-        // 3. The event only needs the parking spot's ID
-        //
-        // Required using: MySpot.Modules.ParkingSpots.Core.Events
+        await _messageBroker.PublishAsync(new ParkingSpotCreated(parkingSpot.Id));
     }
 
     public async Task UpdateAsync(ParkingSpot parkingSpot)
@@ -71,10 +63,6 @@ internal sealed class ParkingSpotsService : IParkingSpotsService
 
         _parkingSpots.Remove(parkingSpot);
         await _context.SaveChangesAsync();
-
-        // TODO: Exercise #5 - Asynchronous Communication
-        //
-        // Publish a ParkingSpotDeleted event when a parking spot is removed.
-        // Use IMessageBroker.PublishAsync() with the parking spot's ID.
+        await _messageBroker.PublishAsync(new ParkingSpotDeleted(parkingSpotId));
     }
 }
