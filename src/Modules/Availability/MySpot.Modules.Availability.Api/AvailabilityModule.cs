@@ -3,8 +3,11 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using MySpot.Modules.Availability.Application;
+using MySpot.Modules.Availability.Application.Commands;
 using MySpot.Modules.Availability.Infrastructure;
+using MySpot.Shared.Abstractions.Dispatchers;
 using MySpot.Shared.Abstractions.Modules;
+using MySpot.Shared.Infrastructure.Modules;
 
 namespace MySpot.Modules.Availability.Api;
 
@@ -20,6 +23,9 @@ internal sealed class AvailabilityModule : IModule
 
     public void Use(IApplicationBuilder app)
     {
+        app.UseModuleRequests()
+            .Subscribe<AddResource>("availability/resources/add", (command, serviceProvider, ct) =>
+                serviceProvider.GetRequiredService<IDispatcher>().SendAsync(command, ct));
     }
 
     public void Expose(IEndpointRouteBuilder endpoints)

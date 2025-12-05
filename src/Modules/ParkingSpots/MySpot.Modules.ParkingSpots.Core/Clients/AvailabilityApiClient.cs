@@ -30,7 +30,19 @@ internal sealed class AvailabilityApiClient : IAvailabilityApiClient
 
     public async Task AddResourceAsync(Guid resourceId, int capacity, IEnumerable<string> tags)
     {
-        // TODO: Implement this method
-        await Task.CompletedTask;
+        try
+        {
+            await _moduleClient.SendAsync("availability/resources/add", new
+            {
+                ResourceId = resourceId,
+                Capacity = capacity,
+                Tags = tags
+            });
+        }
+        catch (Exception exception)
+        {
+            _logger.LogError(exception, "Failed to add resource: {ResourceId}", resourceId);
+            throw new CannotAddResourceException(resourceId);
+        }
     }
 }

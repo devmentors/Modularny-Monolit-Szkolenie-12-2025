@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using MySpot.Modules.Availability.Shared;
 using MySpot.Modules.Availability.Shared.DTO;
+using MySpot.Modules.ParkingSpots.Core.Clients;
 using MySpot.Modules.ParkingSpots.Core.DAL;
 using MySpot.Modules.ParkingSpots.Core.Entities;
 using MySpot.Modules.ParkingSpots.Core.Exceptions;
@@ -15,14 +16,15 @@ internal sealed class ParkingSpotsService : IParkingSpotsService
     private readonly DbSet<ParkingSpot> _parkingSpots;
     private readonly ParkingSpotsDbContext _context;
     private readonly IMessageBroker _messageBroker;
-    private readonly IAvailabilityModuleApi _availabilityModuleApi;
+    private readonly IAvailabilityApiClient _availabilityApiClient;
 
-    public ParkingSpotsService(ParkingSpotsDbContext context, IMessageBroker messageBroker, IAvailabilityModuleApi availabilityModuleApi)
+    public ParkingSpotsService(ParkingSpotsDbContext context, IMessageBroker messageBroker,
+        IAvailabilityApiClient availabilityApiClient)
     {
         _context = context;
         _parkingSpots = context.ParkingSpots;
         _messageBroker = messageBroker;
-        _availabilityModuleApi = availabilityModuleApi;
+        _availabilityApiClient = availabilityApiClient;
     }
 
     public async Task<IEnumerable<ParkingSpot>> GetAllAsync()
@@ -32,9 +34,9 @@ internal sealed class ParkingSpotsService : IParkingSpotsService
     {
         await _parkingSpots.AddAsync(parkingSpot);
         await _context.SaveChangesAsync();
-        await _availabilityModuleApi.AddResourceAsync(
-            new AddResourceDto(parkingSpot.Id, ParkingSpotCapacity, new[] { "parking_spot" }));
-
+            
+        await _availabilityApiClient.AddResourceAsync(parkingSpot.Id, ParkingSpotCapacity, new[] { "parking_spot" });
+        
         // TODO: Exercise #5 - Asynchronous Communication (Event-Driven)
         //
         // Replace synchronous module call with event publishing.
